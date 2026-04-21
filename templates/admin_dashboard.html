@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="admin-layout">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <i class="fas fa-crown"></i>
+    <span>ADMIN</span>
+  </div>
+  <nav>
+    <a href="#" class="active">
+      <i class="fas fa-chart-line"></i>
+      <span>Dashboard</span>
+    </a>
+    
+    <a href="{{ url_for('admin_messages') }}">
+      <i class="fas fa-envelope"></i>
+      <span>Messages</span>
+      {% if unread_count > 0 %}
+      <span class="badge">{{ unread_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('logout') }}">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Logout</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="admin-main">
+
+  <div class="dashboard-header">
+    <div>
+      <h1>Project Management</h1>
+      <p>Create, edit, and manage your portfolio projects</p>
+    </div>
+    <div class="header-actions">
+      <button onclick="openProjectModal()" class="btn-primary">
+        <i class="fas fa-plus"></i> New Project
+      </button>
+      <button onclick="openDetailModal()" class="btn-secondary">
+        <i class="fas fa-file-alt"></i> Add Details
+      </button>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container">
+    {% for category, msg in messages %}
+    <div class="flash {{ category }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-project-diagram"></i></div>
+      <div class="stat-info">
+        <h3>{{ projects|length }}</h3>
+        <p>Total Projects</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-info">
+        <h3>{{ projects_with_details|length if projects_with_details else 0 }}</h3>
+        <p>With Details</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-eye"></i></div>
+      <div class="stat-info">
+        <h3>{{ total_views|default('1.2k') }}</h3>
+        <p>Total Views</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Projects Table -->
+  <div class="projects-card">
+    <div class="card-header">
+      <h3><i class="fas fa-list"></i> All Projects</h3>
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" id="projectSearch" placeholder="Search projects..." onkeyup="filterProjects()">
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="projects-table" id="projectsTable">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Details</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project in projects %}
+          <tr>
+            <td class="project-title">
+              <strong>{{ project.title }}</strong>
+            </td>
+            <td class="project-desc">{{ project.description[:80] }}{% if project.description|length > 80 %}...{% endif %}</td>
+            <td>
+              {% if project.has_details %}
+              <span class="status-badge completed"><i class="fas fa-check"></i> Complete</span>
+              {% else %}
+              <span class="status-badge pending"><i class="fas fa-clock"></i> Needs Details</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if project.has_details %}
+              <a href="{{ url_for('project_detail', project_id=project.id) }}" target="_blank" class="view-link">
+                <i class="fas fa-external-link-alt"></i> Preview
+              </a>
+              {% else %}
+              <span class="no-details">—</span>
+              {% endif %}
+            </td>
+            <td class="actions">
+              <button class="action-btn edit" onclick="openEditModal('{{ project.id }}', '{{ project.title|escape }}', '{{ project.description|escape }}', '{{ project.link|escape }}')">
+                <i class="fas fa-edit"></i>
+              </button>
+              <a href="{{ url_for('delete_project', id=project.id) }}" class="action-btn delete" onclick="return confirm('Delete this project?')">
+                <i class="fas fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+</div>
+
+<!-- ========== MODAL: ADD PROJECT ========== -->
+<div id="projectModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2><i class="fas fa-plus-circle"></i> Create New Project</h2>
+      <button class="modal-close" onclick="closeProjectModal()">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_project') }}" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Project Title *</label>
+        <input type="text" name="title" placeholder="e.g., Doctor Appointment System" required>
+      </div>
+      <div class="form-group">
+        <label>Short Description *</label>
+        <textarea name="description" rows="3" placeholder="Brief description of the project..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Project URL (optional)</label>
+        <input type="url" name="link" placeholder="https://example.com">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cover Image</label>
+          <div class="file-upload" onclick="document.getElementById('projectImage1').click()">
+            <input type="file" id="projectImage1" name="image1" accept="image/*" hidden>
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload</span>
+            <small>PNG, JPG up to 5MB</small>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Secondary Image</label>
+          <div class="file-upload" onclick="document.getElementById('projectImage2').click()">
+            <input type="file" id="projectImage2" name="image2" accept="image/*" hidden>
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload</span>
+            <small>PNG, JPG up to 5MB</small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeProjectModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========== MODAL: EDIT PROJECT ========== -->
+<div id="editProjectModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2><i class="fas fa-edit"></i> Edit Project</h2>
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <form id="editProjectForm" method="POST">
+      <div class="form-group">
+        <label>Project Title</label>
+        <input type="text" name="title" id="editTitle" required>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" id="editDescription" rows="3" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Project URL</label>
+        <input type="url" name="link" id="editLink">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========== MODAL: ADD PROJECT DETAILS (PLAIN TEXT VERSION) ========== -->
+<div id="addProjectDetail" class="modal-overlay">
+  <div class="modal-container modal-large">
+    <div class="modal-header">
+      <h2><i class="fas fa-file-alt"></i> Add Project Details</h2>
+      <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_project_detail') }}" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Select Project *</label>
+        <select name="project_id" required>
+          <option value="">-- Choose a project --</option>
+          {% for p in projects %}
+          <option value="{{ p.id }}">{{ p.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Project Title (for detail page)</label>
+        <input type="text" name="title" placeholder="Full project title">
+      </div>
+
+      <!-- PLAIN TEXT FIELDS - No HTML needed! -->
+      <div class="form-group">
+        <label>📋 Project Overview</label>
+        <textarea name="overview" rows="4" placeholder="Describe what the project is about, its purpose, and key objectives..."></textarea>
+        <small>Plain text - will be formatted automatically</small>
+      </div>
+
+      <div class="form-group">
+        <label>🎯 Problem Statement</label>
+        <textarea name="problem" rows="3" placeholder="What problem does this project solve?"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>💡 Solution</label>
+        <textarea name="solution" rows="3" placeholder="How does your project solve the problem?"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>⚙️ Key Features (one per line)</label>
+        <textarea name="features" rows="4" placeholder="User authentication&#10;Real-time chat&#10;Payment integration&#10;Admin dashboard"></textarea>
+        <small>Enter each feature on a new line</small>
+      </div>
+
+      <div class="form-group">
+        <label>🏗️ System Architecture</label>
+        <textarea name="architecture" rows="3" placeholder="Describe the technical architecture, frontend, backend, database..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🔄 System Workflow (one per line)</label>
+        <textarea name="workflow" rows="4" placeholder="1. User signs up&#10;2. User selects service&#10;3. Payment processed&#10;4. Confirmation sent"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🧠 Technical Challenges</label>
+        <textarea name="challenges" rows="3" placeholder="Describe key challenges faced and how you solved them..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>📚 Technologies Used (comma separated)</label>
+        <input type="text" name="technologies" placeholder="Python Flask, SQLite, M-Pesa API, HTML, CSS, JavaScript">
+      </div>
+
+      <div class="form-group">
+        <label>🚀 Future Improvements</label>
+        <textarea name="future" rows="2" placeholder="Planned features or enhancements..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🏆 Key Takeaways / Results</label>
+        <textarea name="takeaways" rows="2" placeholder="What did you learn? What were the results?"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Hero/Banner Image</label>
+          <div class="file-upload" onclick="document.getElementById('detailImage1').click()">
+            <input type="file" id="detailImage1" name="image1" accept="image/*" hidden>
+            <i class="fas fa-image"></i>
+            <span>Upload banner</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Screenshot 1</label>
+          <div class="file-upload" onclick="document.getElementById('detailImage2').click()">
+            <input type="file" id="detailImage2" name="image2" accept="image/*" hidden>
+            <i class="fas fa-image"></i>
+            <span>Upload image</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Screenshot 2</label>
+          <div class="file-upload" onclick="document.getElementById('detailImage3').click()">
+            <input type="file" id="detailImage3" name="image3" accept="image/*" hidden>
+            <i class="fas fa-image"></i>
+            <span>Upload image</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeDetailModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openProjectModal() {
+  document.getElementById("projectModal").style.display = "flex";
+}
+function closeProjectModal() {
+  document.getElementById("projectModal").style.display = "none";
+}
+function openEditModal(id, title, description, link) {
+  document.getElementById("editProjectModal").style.display = "flex";
+  document.getElementById("editTitle").value = title;
+  document.getElementById("editDescription").value = description;
+  document.getElementById("editLink").value = link;
+  document.getElementById("editProjectForm").action = "/edit_project/" + id;
+}
+function closeEditModal() {
+  document.getElementById("editProjectModal").style.display = "none";
+}
+function openDetailModal() {
+  document.getElementById("addProjectDetail").style.display = "flex";
+}
+function closeDetailModal() {
+  document.getElementById("addProjectDetail").style.display = "none";
+}
+function filterProjects() {
+  let input = document.getElementById("projectSearch");
+  let filter = input.value.toUpperCase();
+  let table = document.getElementById("projectsTable");
+  let tr = table.getElementsByTagName("tr");
+  for (let i = 1; i < tr.length; i++) {
+    let td = tr[i].getElementsByTagName("td")[0];
+    if (td) {
+      let txtValue = td.textContent || td.innerText;
+      tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    }
+  }
+}
+// File upload preview
+document.querySelectorAll('.file-upload').forEach(el => {
+  let input = el.querySelector('input');
+  if (input) {
+    input.addEventListener('change', function(e) {
+      if (this.files && this.files[0]) {
+        let span = el.querySelector('span');
+        if (span) span.textContent = this.files[0].name;
+      }
+    });
+  }
+});
+</script>
+
+
+{% endblock %}

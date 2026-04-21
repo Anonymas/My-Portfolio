@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<section class="container text-center mt-4">
+
+<img src="{{ url_for('static', filename='images/profile.jpeg') }}" 
+     alt="My Profile" width="260" height="260" 
+     class="rounded-circle shadow mb-3">
+
+<h2 class="mb-0">Hi, I'm Dennis Githinji</h2>
+
+<p class="text-muted">
+Software Developer&nbsp;|&nbsp;Cybersecurity Specialist&nbsp;|&nbsp;
+AWS Certified DevOps Engineer&nbsp;|&nbsp;
+AWS Certified Solutions Architect
+</p>
+
+<!-- CONNECT SECTION -->
+
+<div class="connect-section mt-3">
+
+
+
+<div class="connect-links">
+
+<a href="https://www.linkedin.com/in/dennis-githinji-7244bb10a" target="_blank">
+<i class="fab fa-linkedin"></i> LinkedIn
+</a>
+
+<a href="https://github.com/Anonymas" target="_blank">
+<i class="fab fa-github"></i> GitHub
+</a>
+
+<a href="https://www.fiverr.com/denogithinji201/build-a-modern-fast-responsive-and-secure-websites?context_referrer=tailored_homepage_perseus&source=recently_viewed_gigs&ref_ctx_id=4c15883bacab4957a921dff12aaca4c3&context=recommendation&pckg_id=1&pos=2&context_alg=recently_viewed&seller_online=true&imp_id=037269e3-cccc-4041-94f5-d4dd39a1745d" target="_blank">
+<i class="fas fa-briefcase"></i> Hire me on Fiverr
+</a>
+
+<a href="mailto:denogithinji2010@gmail.com">
+<i class="fas fa-envelope"></i> Email Me
+</a>
+
+<a href="{{ url_for('static', filename='files/Dennis Githinji CV.pdf') }}" download>
+<i class="fas fa-download"></i> Download CV
+</a>
+
+</div>
+
+</div>
+
+</section>
+
+
+<section class="about">
+  <h2>Who am I</h2>
+  <p>
+    I am a Cybersecurity and Cloud Solutions Developer passionate about designing secure, scalable, and intelligent systems. 
+    My work focuses on blending software engineering, cloud architecture, and automation to deliver reliable digital solutions 
+    that drive real business impact.
+  </p>
+  <p>
+    With hands-on experience in AWS, Python, and full-stack development, I build cloud-native applications 
+    that emphasize performance, resilience, and security. I enjoy transforming complex challenges into 
+    simple, efficient, and secure solutions.
+  </p>
+  <p>
+    Driven by curiosity and innovation, I continuously explore advancements in cybersecurity, AI, and 
+    cloud engineering to craft solutions that are not just functional but future-ready.
+  </p>
+  <p class="skills-list">
+  <span><i class="fas fa-shield-alt"></i> CyberSecurity Specialist</span>
+  
+  <span><i class="fab fa-aws"></i> AWS Solutions Architect</span>
+  <span><i class="fab fa-python"></i> Python Expert</span>
+  <span><i class="fas fa-code"></i> Software Developer</span>
+  <span><i class="fas fa-cogs"></i>AWS DevOps Engineer</span>
+  <span><i class="fas fa-robot"></i> Artificial Intelligence</span>
+  <span><i class="fas fa-sync-alt"></i> Automation</span>
+  <span><i class="fas fa-network-wired"></i> Network Engineer</span>
+  <span><i class="fas fa-database"></i> Data & Cloud Security</span>
+  <span><i class="fas fa-brain"></i> Machine Learning Engineer</span>
+</p>
+
+<a href="{{ url_for('about') }}">
+  <button class="subscribe-btn">
+    <i class="fa-solid fa-user-secret"></i> More About Me
+  </button>
+</a>
+
+</section>
+
+<section class="what-i-do">
+  <h2>What I Do</h2>
+  <div class="services">
+
+    <div class="service">
+      <h3><i class="fa-solid fa-cloud"></i> Cloud Engineering & Solutions Architecture</h3>
+      <p>
+        Designing, deploying, and managing secure, scalable cloud environments that align with business objectives. 
+        I build optimized AWS-based infrastructures that emphasize automation, performance, and cost efficiency.
+      </p>
+    </div>
+
+    <div class="service">
+      <h3><i class="fa-solid fa-shield-halved"></i>  Cloud Security Architecture</h3>
+      <p>
+        Implementing robust security frameworks to safeguard systems and data in hybrid and cloud-native environments. 
+        I focus on vulnerability management, compliance, and threat detection to ensure business continuity.
+      </p>
+    </div>
+
+    <div class="service">
+      <h3><i class="fa-solid fa-code-branch"></i> Software & DevOps Engineering</h3>
+      <p>
+        Developing cloud-native applications and automated CI/CD pipelines to streamline development and deployment. 
+        I integrate DevOps principles to enhance collaboration, reliability, and delivery speed across projects.
+      </p>
+    </div>
+
+    <div class="service">
+      <h3><i class="fa-solid fa-robot"></i> AI, Data & Automation</h3>
+      <p>
+        Exploring machine learning, intelligent automation, and data-driven decision-making to build smarter systems. 
+        From data pipelines to predictive models, I leverage AI to deliver scalable insights.
+      </p>
+    </div>
+
+<div class="service">
+      <h3><i class="fa-solid fa-user-secret"></i> Cybersecurity & Threat Intelligence</h3>
+      <p>
+        Leveraging advanced cybersecurity tools and methodologies to detect, prevent, and respond to cyber threats.  
+        I specialize in penetration testing, network defense, and digital forensics. Ensuring systems stay resilient 
+        against evolving cyber risks.
+      </p>
+    </div>
+
+    <div class="service">
+      <h3><i class="fa-solid fa-pen-nib"></i> Technical Writing & Knowledge Sharing</h3>
+      <p>
+        Contributing to open knowledge through blogs, documentation, and speaking engagements. 
+        I aim to simplify complex technologies and promote digital literacy across cloud, cybersecurity, and software domains.
+      </p>
+    </div>
+
+  </div>
+</section>
+<!-- Featured Projects Section -->
+<section class="featured-projects">
+  <h2>Featured Projects</h2>
+  
+  <div class="slider-container">
+    <button class="prev-btn"><i class="fas fa-chevron-left"></i></button>
+
+    <div class="slider">
+      {% for p in projects[:5] %} <!-- Show latest 5 projects -->
+      <div class="slide">
+        {% if p.image1 %}
+          <img src="{{ url_for('static', filename='project_images/' ~ p.image1) }}" 
+               alt="{{ p.title }}">
+        {% endif %}
+        <div class="slide-content">
+          <h3>{{ p.title }}</h3>
+          <p>{{ p.summary }}</p>
+          <a href="{{ p.link }}" target="_blank" class="view-btn">View Project</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button class="next-btn"><i class="fas fa-chevron-right"></i></button>
+  </div>
+
+  <div class="view-more">
+    <a href="{{ url_for('projects_page') }}" class="view-more-btn">View More Projects</a>
+  </div>
+</section>
+<!-- Subscribe Section -->
+<section id="subscribe" class="subscribe-section">
+  <div class="subscribe-container">
+    <h2 class="subscribe-title"><i class="fas fa-envelope-open-text"></i> Let's Connect</h2>
+    <p class="subscribe-text">
+      Are you looking for a developer who can build secure, scalable applications and leverage cloud technologies to solve real-world problems? Let’s connect. </p>
+
+<p>I specialize in software development, cloud technologies, and cybersecurity, with hands-on experience building web applications and integrating modern cloud services. </p>
+
+<p>I’m also open to collaborations, freelance opportunities, and conversations around technology, learning, and innovation. I believe technology grows stronger when we share knowledge and build together. </p>
+  
+<a href="{{ url_for('contact') }}">
+  <button class="subscribe-btn">
+    <i class="fas fa-paper-plane"></i> Contact Me
+  </button>
+</a>
+
+      </div>
+</section>
+
+<!-- Auto-slide Script -->
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const slider = document.querySelector('.slider');
+  const nextBtn = document.querySelector('.next-btn');
+  const prevBtn = document.querySelector('.prev-btn');
+  let index = 0;
+
+  function showSlide(i) {
+    slider.style.transform = `translateX(-${i * 100}%)`;
+  }
+
+  nextBtn.addEventListener('click', () => {
+    index = (index + 1) % slides.length;
+    showSlide(index);
+  });
+
+  prevBtn.addEventListener('click', () => {
+    index = (index - 1 + slides.length) % slides.length;
+    showSlide(index);
+  });
+
+  // Auto-slide every 5 seconds
+  setInterval(() => {
+    index = (index + 1) % slides.length;
+    showSlide(index);
+  }, 50000);
+</script>
+
+{% endblock %}

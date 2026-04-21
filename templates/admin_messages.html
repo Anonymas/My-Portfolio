@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="admin-layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <h2 class="logo">Admin</h2>
+  <nav>
+    <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+    <a href="{{ url_for('admin_messages') }}">
+      📬 Messages
+      {% if unread_count > 0 %}
+      <span class="badge">{{ unread_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('logout') }}">🚪 Logout</a>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="admin-main">
+  <h1>Contact Messages</h1>
+
+  <!-- SEARCH -->
+  <form method="GET" class="search-box">
+    <input type="text" name="search" placeholder="Search messages...">
+    <button type="submit">Search</button>
+  </form>
+
+  <div class="messages-container">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message-card {% if not message.is_read %}unread{% endif %}">
+          <div class="message-header">
+            <div>
+              <h3>{{ message.name }}</h3>
+              <span class="message-email">
+                <i class="fas fa-envelope"></i> {{ message.email }}
+              </span>
+              {% if message.phone %}
+              <span class="message-phone" style="margin-left: 15px;">
+                <i class="fas fa-phone"></i> {{ message.phone }}
+              </span>
+              {% endif %}
+            </div>
+            <span class="message-time">
+              {{ message.created_at.strftime("%b %d, %H:%M") if message.created_at else "N/A" }}
+            </span>
+          </div>
+          
+          {% if message.subject %}
+          <div class="message-subject">
+            <strong>Subject:</strong> {{ message.subject }}
+          </div>
+          {% endif %}
+          
+          <p class="message-text">
+            {{ message.message }}
+          </p>
+
+          <div class="message-actions">
+            {% if not message.is_read %}
+              <a href="{{ url_for('mark_read', id=message.id) }}" class="read-btn">
+                <i class="fas fa-check-circle"></i> Mark as Read
+              </a>
+            {% endif %}
+            
+            <a href="mailto:{{ message.email }}?subject=Re: {{ message.subject|default('Your inquiry') }}" class="reply-btn">
+              <i class="fas fa-reply"></i> Reply
+            </a>
+            
+            <a href="{{ url_for('delete_message', id=message.id) }}" class="delete-btn" onclick="return confirm('Delete this message?');">
+              <i class="fas fa-trash"></i> Delete
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No messages found.</p>
+    {% endif %}
+  </div>
+</main>
+
+</div>
+
+
+{% endblock %}

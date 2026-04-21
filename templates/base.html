@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{"My Portfolio" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Atmospheric overlays -->
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <header>
+    <div class="header-inner">
+
+      <!-- LOGO: SVG only -->
+      <div class="logo-wrapper">
+        <a href="{{ url_for('index') }}" class="logo-link">
+          <img src="{{ url_for('static', filename='images/logo.svg') }}" 
+               alt="Dennis Githinji Logo" 
+               class="logo-svg">
+        </a>
+      </div>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav id="mainNav">
+        <a href="{{ url_for('index') }}"><span class="nav-num"></span>Home</a>
+        <a href="{{ url_for('about') }}"><span class="nav-num"></span>About</a>
+        <a href="{{ url_for('projects_page') }}"><span class="nav-num"></span>Projects</a>
+        <a href="{{ url_for('contact') }}"><span class="nav-num"></span>Contact</a>
+
+        {% if session.get('admin') %}
+          <a href="{{ url_for('admin_dashboard') }}" class="nav-special"><i class="fas fa-terminal"></i> Admin</a>
+          <a href="{{ url_for('logout') }}" class="nav-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        {% else %}
+          <a href="#" class="nav-special"
+             onclick="document.getElementById('loginModal').style.display='flex'; return false;">
+            <i class="fas fa-lock"></i> Admin
+          </a>
+        {% endif %}
+      </nav>
+
+      {% if session.get('admin') %}
+        <span class="admin-badge"><i class="fas fa-circle pulse-dot"></i> ONLINE</span>
+      {% endif %}
+
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Admin Login Modal -->
+  <div id="loginModal" class="modal-overlay"
+       onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fas fa-terminal"></i>&nbsp; ADMIN_ACCESS</h3>
+        <span class="close-modal"
+              onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
+      </div>
+      <p class="modal-sub">// Authorized personnel only</p>
+      <form action="{{ url_for('admin_login') }}" method="post">
+        <div class="field-group">
+          <input name="username" placeholder=" " required autocomplete="off" id="f-user">
+          <label for="f-user">Username</label>
+        </div>
+        <div class="field-group">
+          <input type="password" name="password" placeholder=" " required id="f-pass">
+          <label for="f-pass">Password</label>
+        </div>
+        <button type="submit" class="btn-neon">
+          <i class="fas fa-sign-in-alt"></i>&nbsp; AUTHENTICATE
+        </button>
+      </form>
+      <button class="btn-ghost" onclick="document.getElementById('loginModal').style.display='none'">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+
+      <div class="footer-brand">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" 
+             alt="Dennis Githinji Logo" 
+             class="footer-logo-svg">
+      </div>
+
+      <div class="footer-icons">
+        <a href="https://www.linkedin.com/in/dennis-githinji-7244bb10a"
+           target="_blank" aria-label="LinkedIn">
+          <i class="fab fa-linkedin"></i>
+        </a>
+        <a href="https://github.com/Anonymas" target="_blank" aria-label="GitHub">
+          <i class="fab fa-github"></i>
+        </a>
+        <a href="mailto:denogithinji2010@gmail.com" aria-label="Email">
+          <i class="fas fa-envelope"></i>
+        </a>
+      </div>
+
+      <p class="footer-copy">
+        All rights Reserved &copy; <span id="currentYear"></span>
+        &mdash; Design by <a href="#">Dennis Githinji</a>
+      </p>
+
+    </div>
+  </footer>
+
+  <!-- Back to Top Button -->
+  <button id="backToTop" class="back-to-top" aria-label="Scroll to top">
+    <i class="fas fa-arrow-up"></i>
+    <span class="tooltip-text">Back to Top</span>
+  </button>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Current year for footer
+    document.addEventListener("DOMContentLoaded", function () {
+      const yearSpan = document.getElementById("currentYear");
+      if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+      }
+    });
+
+    // Mobile nav toggle
+    const toggle = document.getElementById('navToggle');
+    const nav = document.getElementById('mainNav');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        nav.classList.toggle('open');
+        toggle.classList.toggle('active');
+      });
+    }
+
+    // Scroll-reveal for .reveal elements
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) e.target.classList.add('revealed');
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ============================================
+    // BACK TO TOP BUTTON FUNCTIONALITY
+    // ============================================
+    const backToTopBtn = document.getElementById('backToTop');
+    
+    if (backToTopBtn) {
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+          backToTopBtn.classList.add('show');
+        } else {
+          backToTopBtn.classList.remove('show');
+        }
+      });
+      
+      backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+    }
+  </script>
+</body>
+</html>
