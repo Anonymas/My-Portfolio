@@ -405,22 +405,12 @@ def google_verification():
     return send_from_directory('static', 'google706577dc96b54a38.html')
 
 # =============================
-# INITIALIZE DB & CREATE DEFAULT ADMIN
+# INITIALIZE DB AND RUN APP
 # =============================
 
 with app.app_context():
     db.create_all()
     
-    # Create default admin if none exists
-    if not Admin.query.first():
-        default_admin = Admin(
-            username='admin',
-            password=generate_password_hash('admin123')
-        )
-        db.session.add(default_admin)
-        db.session.commit()
-        print("Default admin created: username='admin', password='admin123'")
-
-
+    
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run()
