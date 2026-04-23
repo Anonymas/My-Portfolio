@@ -385,6 +385,16 @@ def sitemap():
     return send_from_directory('.', 'sitemap.xml')
 
 # =============================
+# Favicon Route
+# =============================
+
+from flask import send_from_directory
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('.', 'favicon.ico')
+
+# =============================
 # Google Site Verification Route
 # =============================
 
