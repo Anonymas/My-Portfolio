@@ -7,7 +7,7 @@
 
 My personal portfolio website showcasing my work as a **Software Developer**, **Cybersecurity Specialist**, and **AWS Certified DevOps Engineer**.
 
-🔗 **Live Demo:** [dennisgithinji.dev](https://dennisgithinji.dev) *(coming soon)*
+🔗 **Live Demo:** [dennisgithinji.tech](https://dennisgithinji.tech) 
 
 ---
 
@@ -83,7 +83,7 @@ Full-featured ecommerce platform using Python, JavaScript, and MySQL.
 
 ## 🚀 Deployment
 
-This portfolio is designed to be deployed on **AWS EC2** with:
+This portfolio has been deployed on **AWS EC2** with:
 
 - **Gunicorn** as the WSGI server
 - **Nginx** as a reverse proxy
