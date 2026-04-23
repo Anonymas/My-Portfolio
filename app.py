@@ -375,6 +375,16 @@ def inject_unread_messages():
     return dict(unread_count=0)
 
 # =============================
+# site Map Route
+# =============================
+
+from flask import send_from_directory
+
+@app.route('/sitemap.xml')
+def sitemap():
+    return send_from_directory('.', 'sitemap.xml')
+
+# =============================
 # INITIALIZE DB & CREATE DEFAULT ADMIN
 # =============================
 
@@ -390,6 +400,7 @@ with app.app_context():
         db.session.add(default_admin)
         db.session.commit()
         print("Default admin created: username='admin', password='admin123'")
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
