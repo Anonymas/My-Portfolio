@@ -385,6 +385,16 @@ def sitemap():
     return send_from_directory('.', 'sitemap.xml')
 
 # =============================
+# Google Site Verification Route
+# =============================
+
+from flask import send_from_directory
+
+@app.route('/google706577dc96b54a38.html')
+def google_verification():
+    return send_from_directory('static', 'google706577dc96b54a38.html')
+
+# =============================
 # INITIALIZE DB & CREATE DEFAULT ADMIN
 # =============================
 
