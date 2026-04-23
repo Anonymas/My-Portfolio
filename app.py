@@ -405,12 +405,42 @@ def google_verification():
     return send_from_directory('static', 'google706577dc96b54a38.html')
 
 # =============================
-# INITIALIZE DB AND RUN APP
+# INITIALIZE DB AND CREATE ADMIN COMMAND
 # =============================
 
 with app.app_context():
     db.create_all()
     
-    
+import click
+from flask.cli import with_appcontext
+from werkzeug.security import generate_password_hash
+
+@app.cli.command("create-admin")
+@click.option("--username", prompt=True)
+@click.option("--password", prompt=True, hide_input=True, confirmation_prompt=True)
+@with_appcontext
+def create_admin(username, password):
+    """Create a new admin user"""
+
+    existing_admin = Admin.query.filter_by(username=username).first()
+
+    if existing_admin:
+        print("❌ Admin already exists")
+        return
+
+    admin = Admin(
+        username=username,
+        password=generate_password_hash(password)
+    )
+
+    db.session.add(admin)
+    db.session.commit()
+
+    print("✅ Admin created successfully")
+
+# =============================
+#  RUN APP
+# =============================
+
 if __name__ == '__main__':
     app.run()
