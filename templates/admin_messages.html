@@ -5,6 +5,7 @@
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
+  <i class="fas fa-crown"></i>
   <h2 class="logo">Admin</h2>
   <nav>
     <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
@@ -14,7 +15,7 @@
       <span class="badge">{{ unread_count }}</span>
       {% endif %}
     </a>
-    <a href="{{ url_for('logout') }}">🚪 Logout</a>
+    <a href="{{ url_for('logout') }}"> <i class="fas fa-sign-out-alt"></i> Logout</a>
   </nav>
 </aside>
 

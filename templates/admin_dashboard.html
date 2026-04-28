@@ -3,29 +3,20 @@
 
 <div class="admin-layout">
 
-<!-- Sidebar -->
+
+<!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="sidebar-logo">
-    <i class="fas fa-crown"></i>
-    <span>ADMIN</span>
-  </div>
+  <i class="fas fa-crown"></i>
+  <h2 class="logo">Admin</h2>
   <nav>
-    <a href="#" class="active">
-      <i class="fas fa-chart-line"></i>
-      <span>Dashboard</span>
-    </a>
-    
+    <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
     <a href="{{ url_for('admin_messages') }}">
-      <i class="fas fa-envelope"></i>
-      <span>Messages</span>
+      📬 Messages
       {% if unread_count > 0 %}
       <span class="badge">{{ unread_count }}</span>
       {% endif %}
     </a>
-    <a href="{{ url_for('logout') }}">
-      <i class="fas fa-sign-out-alt"></i>
-      <span>Logout</span>
-    </a>
+    <a href="{{ url_for('logout') }}"> <i class="fas fa-sign-out-alt"></i> Logout</a>
   </nav>
 </aside>
 
@@ -111,21 +102,18 @@
             </td>
             <td class="project-desc">{{ project.description[:80] }}{% if project.description|length > 80 %}...{% endif %}</td>
             <td>
-              {% if project.has_details %}
+             {% if project.details %}
               <span class="status-badge completed"><i class="fas fa-check"></i> Complete</span>
               {% else %}
               <span class="status-badge pending"><i class="fas fa-clock"></i> Needs Details</span>
               {% endif %}
             </td>
-            <td>
-              {% if project.has_details %}
-              <a href="{{ url_for('project_detail', project_id=project.id) }}" target="_blank" class="view-link">
-                <i class="fas fa-external-link-alt"></i> Preview
-              </a>
-              {% else %}
-              <span class="no-details">—</span>
-              {% endif %}
-            </td>
+          <td>
+  <a href="{{ url_for('projects_page') }}#project-{{ project.id }}" class="view-link">
+    <i class="fas fa-external-link-alt"></i> Preview
+  </a>
+</td>
+
             <td class="actions">
               <button class="action-btn edit" onclick="openEditModal('{{ project.id }}', '{{ project.title|escape }}', '{{ project.description|escape }}', '{{ project.link|escape }}')">
                 <i class="fas fa-edit"></i>
@@ -141,9 +129,86 @@
     </div>
   </div>
 
+<!-- ================= DETAILED PROJECTS ================= -->
+<div class="projects-card">
+  <div class="card-header">
+    <h3><i class="fas fa-file-alt"></i> Detailed Projects</h3>
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="detailSearch" placeholder="Search detailed projects..." onkeyup="filterDetailProjects()">
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="projects-table" id="detailsTable">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Project Overview</th>
+          <th>Status</th>
+          <th>Details</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in details %}
+        <tr>
+          <td><strong>{{ d.title if d.title else d.project.title }}</strong></td>
+
+          <td>
+            {{ d.overview[:80] if d.overview else '—' }}
+            {% if d.overview and d.overview|length > 80 %}...{% endif %}
+          </td>
+
+          <td>
+            <span class="status-badge completed">
+              <i class="fas fa-check"></i> Complete
+            </span>
+          </td>
+
+          <td>
+            <a href="{{ url_for('project_detail', project_id=d.project_id) }}" target="_blank" class="view-link">
+              <i class="fas fa-external-link-alt"></i> Preview
+            </a>
+          </td>
+
+          <td class="actions">
+            <button class="action-btn edit"
+              onclick="openEditDetailModal(
+                '{{ d.id }}',
+                '{{ d.project_id }}',
+                `{{ d.title|escape }}`,
+                `{{ d.overview|escape }}`,
+                `{{ d.problem|escape }}`,
+                `{{ d.solution|escape }}`,
+                `{{ d.features|escape }}`,
+                `{{ d.architecture|escape }}`,
+                `{{ d.workflow|escape }}`,
+                `{{ d.challenges|escape }}`,
+                `{{ d.technologies|escape }}`,
+                `{{ d.future|escape }}`,
+                `{{ d.takeaways|escape }}`
+              )">
+              <i class="fas fa-edit"></i>
+            </button>
+
+            <a href="{{ url_for('delete_detail', id=d.id) }}"
+               class="action-btn delete"
+               onclick="return confirm('Delete this detail?')">
+              <i class="fas fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 </main>
 
 </div>
+
 
 <!-- ========== MODAL: ADD PROJECT ========== -->
 <div id="projectModal" class="modal-overlay">
@@ -168,19 +233,22 @@
       <div class="form-row">
         <div class="form-group">
           <label>Cover Image</label>
-          <div class="file-upload" onclick="document.getElementById('projectImage1').click()">
-            <input type="file" id="projectImage1" name="image1" accept="image/*" hidden>
+          <div class="file-upload" onclick="document.getElementById('addProjectImage1').click()">
+            <input type="file" id="addProjectImage1" name="image1" accept="image/*" hidden data-preview="addProjectPreview1">
             <i class="fas fa-cloud-upload-alt"></i>
             <span>Click to upload</span>
+            <img id="addProjectPreview1" style="display:none; width:100px;">
             <small>PNG, JPG up to 5MB</small>
           </div>
         </div>
+
         <div class="form-group">
           <label>Secondary Image</label>
-          <div class="file-upload" onclick="document.getElementById('projectImage2').click()">
-            <input type="file" id="projectImage2" name="image2" accept="image/*" hidden>
+          <div class="file-upload" onclick="document.getElementById('addProjectImage2').click()">
+            <input type="file" id="addProjectImage2" name="image2" accept="image/*" hidden data-preview="addProjectPreview2">
             <i class="fas fa-cloud-upload-alt"></i>
             <span>Click to upload</span>
+            <img id="addProjectPreview2" style="display:none; width:100px;">
             <small>PNG, JPG up to 5MB</small>
           </div>
         </div>
@@ -200,7 +268,8 @@
       <h2><i class="fas fa-edit"></i> Edit Project</h2>
       <button class="modal-close" onclick="closeEditModal()">&times;</button>
     </div>
-    <form id="editProjectForm" method="POST">
+    
+      <form id="editProjectForm" method="POST" enctype="multipart/form-data">
       <div class="form-group">
         <label>Project Title</label>
         <input type="text" name="title" id="editTitle" required>
@@ -213,6 +282,28 @@
         <label>Project URL</label>
         <input type="url" name="link" id="editLink">
       </div>
+
+      <div class="form-row">
+  <div class="form-group"onclick="document.getElementById('editProjectImage1').click()">
+    <label>Update Cover Image</label>
+    <input type="file" id="editProjectImage1" name="image1" accept="image/*" hidden data-preview="editProjectPreview1">
+    <img id="editProjectPreview1" style="display:none; width:100px;">
+    <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload</span>
+            <small>PNG, JPG up to 5MB</small>
+  </div>
+
+
+  <div class="form-group"onclick="document.getElementById('editProjectImage2').click()">
+    <label>Update Secondary Image</label>
+    <input type="file" id="editProjectImage2" name="image2" accept="image/*" hidden data-preview="editProjectPreview2">
+    <img id="editProjectPreview2" style="display:none; width:100px;">
+    <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload</span>
+            <small>PNG, JPG up to 5MB</small>
+  </div>
+</div>
+
       <div class="modal-footer">
         <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
         <button type="submit" class="btn-primary">Save</button>
@@ -298,31 +389,39 @@
       </div>
 
       <div class="form-row">
-        <div class="form-group">
-          <label>Hero/Banner Image</label>
-          <div class="file-upload" onclick="document.getElementById('detailImage1').click()">
-            <input type="file" id="detailImage1" name="image1" accept="image/*" hidden>
-            <i class="fas fa-image"></i>
-            <span>Upload banner</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Screenshot 1</label>
-          <div class="file-upload" onclick="document.getElementById('detailImage2').click()">
-            <input type="file" id="detailImage2" name="image2" accept="image/*" hidden>
-            <i class="fas fa-image"></i>
-            <span>Upload image</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Screenshot 2</label>
-          <div class="file-upload" onclick="document.getElementById('detailImage3').click()">
-            <input type="file" id="detailImage3" name="image3" accept="image/*" hidden>
-            <i class="fas fa-image"></i>
-            <span>Upload image</span>
-          </div>
-        </div>
-      </div>
+  <div class="form-group">
+    <label>Hero/Banner Image</label>
+    <div class="file-upload" onclick="document.getElementById('detailImage1').click()">
+      <input type="file" id="detailImage1" name="image1" accept="image/*" hidden data-preview="addPreview1">
+      <i class="fas fa-image"></i>
+      <span>Upload banner</span>
+      <small>PNG, JPG up to 5MB</small>
+      <img id="addPreview1" style="display:none; width:100px;">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Screenshot 1</label>
+    <div class="file-upload" onclick="document.getElementById('detailImage2').click()">
+      <input type="file" id="detailImage2" name="image2" accept="image/*" hidden data-preview="addPreview2">
+      <i class="fas fa-image"></i>
+      <span>Upload screenshot</span>
+      <small>PNG, JPG up to 5MB</small>
+      <img id="addPreview2" style="display:none; width:100px;">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Screenshot 2</label>
+    <div class="file-upload" onclick="document.getElementById('detailImage3').click()">
+      <input type="file" id="detailImage3" name="image3" accept="image/*" hidden data-preview="addPreview3">
+      <i class="fas fa-image"></i>
+      <span>Upload screenshot </span>
+      <small>PNG, JPG up to 5MB</small>
+      <img id="addPreview3" style="display:none; width:100px;">
+    </div>
+  </div>
+</div>
 
       <div class="modal-footer">
         <button type="button" class="btn-secondary" onclick="closeDetailModal()">Cancel</button>
@@ -330,57 +429,306 @@
       </div>
     </form>
   </div>
+ </div>
+
+ <!-- ========== MODAL: EDIT PROJECT DETAILS ========== -->
+<div id="editProjectDetailModal" class="modal-overlay">
+  <div class="modal-container modal-large">
+    <div class="modal-header">
+      <h2><i class="fas fa-edit"></i> Edit Project Details</h2>
+      <button class="modal-close" onclick="closeEditDetailModal()">&times;</button>
+    </div>
+
+    <form id="editDetailForm" method="POST" enctype="multipart/form-data">
+
+      <input type="hidden" name="project_id" id="editDetailProjectId">
+
+      <div class="form-group">
+        <label>Project Title</label>
+        <input type="text" name="title" id="editDetailTitle">
+      </div>
+
+      <div class="form-group">
+        <label>📋 Overview</label>
+        <textarea name="overview" id="editDetailOverview" rows="4"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🎯 Problem</label>
+        <textarea name="problem" id="editDetailProblem"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>💡 Solution</label>
+        <textarea name="solution" id="editDetailSolution"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>⚙️ Features</label>
+        <textarea name="features" id="editDetailFeatures"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🏗️ Architecture</label>
+        <textarea name="architecture" id="editDetailArchitecture"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🔄 Workflow</label>
+        <textarea name="workflow" id="editDetailWorkflow"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🧠 Challenges</label>
+        <textarea name="challenges" id="editDetailChallenges"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>📚 Technologies</label>
+        <input type="text" name="technologies" id="editDetailTechnologies">
+      </div>
+
+      <div class="form-group">
+        <label>🚀 Future</label>
+        <textarea name="future" id="editDetailFuture"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🏆 Takeaways</label>
+        <textarea name="takeaways" id="editDetailTakeaways"></textarea>
+      </div>
+
+      
+<div class="form-row">
+
+  <div class="form-group" onclick="document.getElementById('editDetailImage1').click()">
+    <label>Update Banner</label>
+    <input type="file" id="editDetailImage1" name="image1" accept="image/*" hidden data-preview="editDetailPreview1">
+    <img id="editDetailPreview1" style="display:none; width:100px;">
+    <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload</span>
+            <small>PNG, JPG up to 5MB</small>
+  </div>
+
+  <div class="form-group" onclick="document.getElementById('editDetailImage2').click()">
+    <label>Update Screenshot 1</label>
+    <input type="file" id="editDetailImage2" name="image2" accept="image/*" hidden data-preview="editDetailPreview2">
+    <img id="editDetailPreview2" style="display:none; width:100px;">
+    <i class="fas fa-cloud-upload-alt"></i>
+              <span>Click to upload</span>
+              <small>PNG, JPG up to 5MB</small>
+  </div>
+
+  <div class="form-group" onclick="document.getElementById('editDetailImage3').click()">
+    <label>Update Screenshot 2</label>
+    <input type="file" id="editDetailImage3" name="image3" accept="image/*" hidden data-preview="editDetailPreview3">
+    <img id="editDetailPreview3" style="display:none; width:100px;">
+    <i class="fas fa-cloud-upload-alt"></i>
+              <span>Click to upload</span>
+              <small>PNG, JPG up to 5MB</small>
+  </div>
+
 </div>
 
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeEditDetailModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
 <script>
+/* ================= MODALS ================= */
+
 function openProjectModal() {
   document.getElementById("projectModal").style.display = "flex";
 }
+
 function closeProjectModal() {
   document.getElementById("projectModal").style.display = "none";
 }
-function openEditModal(id, title, description, link) {
+
+function openEditModal(id, title, description, link, image1=null, image2=null) {
   document.getElementById("editProjectModal").style.display = "flex";
+
   document.getElementById("editTitle").value = title;
   document.getElementById("editDescription").value = description;
   document.getElementById("editLink").value = link;
+
   document.getElementById("editProjectForm").action = "/edit_project/" + id;
-}
-function closeEditModal() {
-  document.getElementById("editProjectModal").style.display = "none";
-}
-function openDetailModal() {
-  document.getElementById("addProjectDetail").style.display = "flex";
-}
-function closeDetailModal() {
-  document.getElementById("addProjectDetail").style.display = "none";
-}
-function filterProjects() {
-  let input = document.getElementById("projectSearch");
-  let filter = input.value.toUpperCase();
-  let table = document.getElementById("projectsTable");
-  let tr = table.getElementsByTagName("tr");
-  for (let i = 1; i < tr.length; i++) {
-    let td = tr[i].getElementsByTagName("td")[0];
-    if (td) {
-      let txtValue = td.textContent || td.innerText;
-      tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+
+  // Show existing images
+  if (image1) {
+    let img = document.getElementById("editProjectPreview1");
+    if (img) {
+      img.src = "/static/project_images/" + image1;
+      img.style.display = "block";
+    }
+  }
+
+  if (image2) {
+    let img = document.getElementById("editProjectPreview2");
+    if (img) {
+      img.src = "/static/project_images/" + image2;
+      img.style.display = "block";
     }
   }
 }
-// File upload preview
-document.querySelectorAll('.file-upload').forEach(el => {
-  let input = el.querySelector('input');
-  if (input) {
-    input.addEventListener('change', function(e) {
-      if (this.files && this.files[0]) {
-        let span = el.querySelector('span');
-        if (span) span.textContent = this.files[0].name;
-      }
-    });
-  }
-});
-</script>
 
+function closeEditModal() {
+  document.getElementById("editProjectModal").style.display = "none";
+}
+
+function openDetailModal() {
+  document.getElementById("addProjectDetail").style.display = "flex";
+}
+
+function closeDetailModal() {
+  document.getElementById("addProjectDetail").style.display = "none";
+}
+
+/* ================= SEARCH ================= */
+
+function filterProjects() {
+  let input = document.getElementById("projectSearch").value.toUpperCase();
+  let rows = document.querySelectorAll("#projectsTable tr");
+
+  rows.forEach((row, i) => {
+    if (i === 0) return;
+    let text = row.cells[0]?.innerText.toUpperCase();
+    row.style.display = text.includes(input) ? "" : "none";
+  });
+}
+
+function filterDetailProjects() {
+  let input = document.getElementById("detailSearch").value.toUpperCase();
+  let rows = document.querySelectorAll("#detailsTable tr");
+
+  rows.forEach((row, i) => {
+    if (i === 0) return;
+    let text = row.cells[0]?.innerText.toUpperCase();
+    row.style.display = text.includes(input) ? "" : "none";
+  });
+}
+
+/* ================= FILE NAME DISPLAY ================= */
+
+document.querySelectorAll('input[type="file"]').forEach(input => {
+  input.addEventListener('change', function () {
+    if (this.files.length > 0) {
+      let container = this.closest(".file-upload") || this.parentElement;
+      let span = container.querySelector("span");
+      if (span) {
+        span.textContent = this.files[0].name;
+      }
+    }
+  });
+});
+
+/* ================= IMAGE PREVIEW ================= */
+
+function previewImage(input) {
+  let previewId = input.getAttribute("data-preview");
+  if (!previewId) return;
+
+  let preview = document.getElementById(previewId);
+
+  if (input.files && input.files[0] && preview) {
+    let reader = new FileReader();
+
+    reader.onload = function (e) {
+      preview.src = e.target.result;
+      preview.style.display = "block";
+    };
+
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+document.querySelectorAll('input[type="file"]').forEach(input => {
+  input.addEventListener('change', function () {
+    previewImage(this);
+
+    // show filename
+    let container = this.closest(".file-upload") || this.parentElement;
+    let span = container.querySelector("span");
+    if (span && this.files.length > 0) {
+      span.textContent = this.files[0].name;
+    }
+  });
+});
+
+
+/* ================= EDIT DETAIL ================= */
+
+function openEditDetailModal(
+  id,
+  project_id,
+  title,
+  overview,
+  problem,
+  solution,
+  features,
+  architecture,
+  workflow,
+  challenges,
+  technologies,
+  future,
+  takeaways,
+  image1=null,
+  image2=null,
+  image3=null
+) {
+  document.getElementById("editProjectDetailModal").style.display = "flex";
+
+  document.getElementById("editDetailProjectId").value = project_id;
+  document.getElementById("editDetailTitle").value = title || "";
+  document.getElementById("editDetailOverview").value = overview || "";
+  document.getElementById("editDetailProblem").value = problem || "";
+  document.getElementById("editDetailSolution").value = solution || "";
+  document.getElementById("editDetailFeatures").value = features || "";
+  document.getElementById("editDetailArchitecture").value = architecture || "";
+  document.getElementById("editDetailWorkflow").value = workflow || "";
+  document.getElementById("editDetailChallenges").value = challenges || "";
+  document.getElementById("editDetailTechnologies").value = technologies || "";
+  document.getElementById("editDetailFuture").value = future || "";
+  document.getElementById("editDetailTakeaways").value = takeaways || "";
+
+  document.getElementById("editDetailForm").action =
+    "/edit_project_detail/" + id;
+
+  // show existing images
+  if (image1) {
+    let img = document.getElementById("editDetailPreview1");
+    if (img) {
+      img.src = "/static/project_images/" + image1;
+      img.style.display = "block";
+    }
+  }
+
+  if (image2) {
+    let img = document.getElementById("editDetailPreview2");
+    if (img) {
+      img.src = "/static/project_images/" + image2;
+      img.style.display = "block";
+    }
+  }
+
+  if (image3) {
+    let img = document.getElementById("editDetailPreview3");
+    if (img) {
+      img.src = "/static/project_images/" + image3;
+      img.style.display = "block";
+    }
+  }
+}
+
+function closeEditDetailModal() {
+  document.getElementById("editProjectDetailModal").style.display = "none";
+}
+</script>
 
 {% endblock %}

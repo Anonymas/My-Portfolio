@@ -4,7 +4,7 @@
   <h2>My Projects</h2>
   <div class="project-grid">
     {% for p in projects %}
-      <div class="project-card">
+      <div class="project-card" id="project-{{ p.id }}">
 
         {% if p.image1 %}
         <img src="{{ url_for('static', filename='project_images/' ~ p.image1) }}" 

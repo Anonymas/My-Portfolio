@@ -3,22 +3,30 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from sqlalchemy import func
+from flask import send_from_directory
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET', 'dev-secret')
 
+
 # Configuration
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///local.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/project_images/'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static/project_images')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
-
+limiter = Limiter(key_func=get_remote_address, app=app)
 # =============================
 # MODELS
 # =============================
@@ -30,10 +38,14 @@ class Project(db.Model):
     link = db.Column(db.String(255), nullable=True)
     image1 = db.Column(db.String(255), nullable=True)
     image2 = db.Column(db.String(255), nullable=True)
-    date = db.Column(db.String(50), default='March 2025')
+    date = db.Column(db.String(50), default=lambda: datetime.utcnow().strftime('%B %Y'))
     author = db.Column(db.String(100), default='Dennis Githinji')
-    views = db.Column(db.String(50), default='1.2k')
     comments = db.Column(db.String(50), default='24')
+    views = db.relationship(
+        'ProjectView',
+        backref='project',
+        cascade="all, delete-orphan"
+    )
 
 
 class Contact(db.Model):
@@ -54,6 +66,37 @@ class Admin(db.Model):
 class ProjectDetail(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+
+    project = db.relationship(
+    'Project',
+    backref=db.backref('details', uselist=False, cascade="all, delete-orphan")
+)
+
+    # ✅ ADD THESE (copy from ProjectView)
+    title = db.Column(db.String(200))
+    overview = db.Column(db.Text)
+    problem = db.Column(db.Text)
+    solution = db.Column(db.Text)
+    features = db.Column(db.Text)
+    architecture = db.Column(db.Text)
+    workflow = db.Column(db.Text)
+    challenges = db.Column(db.Text)
+    technologies = db.Column(db.String(500))
+    future = db.Column(db.Text)
+    takeaways = db.Column(db.Text)
+
+    image1 = db.Column(db.String(200))
+    image2 = db.Column(db.String(200))
+    image3 = db.Column(db.String(200))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ProjectView(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    ip_address = db.Column(db.String(100))
+    viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
     
     # Basic info
     title = db.Column(db.String(200))
@@ -84,31 +127,34 @@ class ProjectDetail(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship
-    project = db.relationship('Project', backref=db.backref('details', uselist=False, lazy=True))
-
+    
 # =============================
 # AUTH ROUTES
 # =============================
 
 @app.route('/admin-login', methods=['POST'])
+@limiter.limit("5 per minute")
 def admin_login():
     username = request.form['username']
     password = request.form['password']
 
     admin = Admin.query.filter_by(username=username).first()
+
     if admin and check_password_hash(admin.password, password):
         session['admin'] = True
+        session.permanent = True  # activates timeout
+
         flash("Login successful!", "success")
         return redirect(url_for('admin_dashboard'))
 
     flash("Invalid credentials", "error")
     return redirect(url_for('index'))
 
+from flask import session, redirect, url_for
+
 @app.route('/logout')
 def logout():
-    session.pop('admin', None)
-    flash("Logged out successfully", "success")
+    session.clear()  # clears user session
     return redirect(url_for('index'))
 
 # =============================
@@ -166,13 +212,18 @@ def admin_dashboard():
         return redirect(url_for('index'))
     
     projects = Project.query.all()
-    # Count projects with details
     projects_with_details = [p for p in projects if p.details]
-    
-    return render_template('admin_dashboard.html', 
-                         projects=projects,
-                         projects_with_details=projects_with_details,
-                         total_views='1.2k')
+    details = ProjectDetail.query.all()
+
+    total_views = db.session.query(func.count(ProjectView.id)).scalar()
+
+    return render_template(
+        'admin_dashboard.html',
+        projects=projects,
+        projects_with_details=projects_with_details,
+        details=details,  # IMPORTANT
+        total_views=total_views
+    )
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_project():
@@ -225,6 +276,22 @@ def edit_project(id):
     project.description = request.form['description']
     project.link = request.form['link']
 
+    upload_folder = app.config['UPLOAD_FOLDER']
+
+    # Handle images
+    image1 = request.files.get('image1')
+    image2 = request.files.get('image2')
+
+    if image1 and image1.filename:
+        filename1 = secure_filename(image1.filename)
+        image1.save(os.path.join(upload_folder, filename1))
+        project.image1 = filename1
+
+    if image2 and image2.filename:
+        filename2 = secure_filename(image2.filename)
+        image2.save(os.path.join(upload_folder, filename2))
+        project.image2 = filename2
+
     db.session.commit()
 
     flash("Project updated successfully!", "success")
@@ -236,15 +303,23 @@ def delete_project(id):
         return redirect(url_for('index'))
 
     project = Project.query.get_or_404(id)
-    
-    # Delete associated details first
-    if project.details:
-        db.session.delete(project.details)
-    
-    db.session.delete(project)
+
+    db.session.delete(project)  # ✅ deletes views automatically
     db.session.commit()
 
     flash("Project deleted successfully!", "success")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/delete_detail/<int:id>')
+def delete_detail(id):
+    if 'admin' not in session:
+        return redirect(url_for('index'))
+
+    detail = ProjectDetail.query.get_or_404(id)
+    db.session.delete(detail)
+    db.session.commit()
+
+    flash("Project detail deleted successfully!", "success")
     return redirect(url_for('admin_dashboard'))
 
 # =============================
@@ -295,6 +370,43 @@ def add_project_detail():
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route('/edit_project_detail/<int:id>', methods=['POST'])
+def edit_project_detail(id):
+    if 'admin' not in session:
+        return redirect(url_for('index'))
+
+    detail = ProjectDetail.query.get_or_404(id)
+
+    # Text fields
+    detail.title = request.form.get('title')
+    detail.overview = request.form.get('overview')
+    detail.problem = request.form.get('problem')
+    detail.solution = request.form.get('solution')
+    detail.features = request.form.get('features')
+    detail.architecture = request.form.get('architecture')
+    detail.workflow = request.form.get('workflow')
+    detail.challenges = request.form.get('challenges')
+    detail.technologies = request.form.get('technologies')
+    detail.future = request.form.get('future')
+    detail.takeaways = request.form.get('takeaways')
+
+    # ✅ HANDLE IMAGE UPDATES
+    upload_folder = app.config['UPLOAD_FOLDER']
+
+    for img_field in ['image1', 'image2', 'image3']:
+        file = request.files.get(img_field)
+
+        if file and file.filename:
+            filename = secure_filename(f"{detail.project_id}_{img_field}_{file.filename}")
+            file.save(os.path.join(upload_folder, filename))
+
+            # overwrite ONLY if new file uploaded
+            setattr(detail, img_field, filename)
+
+    db.session.commit()
+
+    flash("Project details updated successfully!", "success")
+    return redirect(url_for('admin_dashboard'))
 
 # =============================
 # MESSAGE HANDLING
@@ -355,8 +467,21 @@ def delete_message(id):
 @app.route("/project/<int:project_id>")
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
+
+    ip = request.remote_addr
+
+    existing = ProjectView.query.filter_by(
+        project_id=project_id,
+        ip_address=ip
+    ).first()
+
+    if not existing:
+        view = ProjectView(project_id=project_id, ip_address=ip)
+        db.session.add(view)
+        db.session.commit()
+
     details = ProjectDetail.query.filter_by(project_id=project_id).first()
-    
+
     return render_template(
         "detailed_project.html",
         project=project,
@@ -378,7 +503,6 @@ def inject_unread_messages():
 # site Map Route
 # =============================
 
-from flask import send_from_directory
 
 @app.route('/sitemap.xml')
 def sitemap():
@@ -388,7 +512,6 @@ def sitemap():
 # Favicon Route
 # =============================
 
-from flask import send_from_directory
 
 @app.route('/favicon.ico')
 def favicon():
@@ -398,7 +521,6 @@ def favicon():
 # Google Site Verification Route
 # =============================
 
-from flask import send_from_directory
 
 @app.route('/google706577dc96b54a38.html')
 def google_verification():
@@ -437,6 +559,12 @@ def create_admin(username, password):
     db.session.commit()
 
     print("✅ Admin created successfully")
+
+
+@app.before_request
+def session_timeout():
+    if 'admin' in session:
+        session.modified = True
 
 # =============================
 #  RUN APP
