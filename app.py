@@ -9,6 +9,7 @@ from flask_limiter.util import get_remote_address
 from sqlalchemy import func
 from flask import send_from_directory
 
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET', 'dev-secret')
 
@@ -128,6 +129,17 @@ class ProjectView(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     
+
+@app.before_request
+def ensure_non_www():
+    # If the user visits 'www.dennisgithinji.tech'
+    if request.host.startswith('www.'):
+        # Build the new URL without 'www.'
+        new_host = request.host.replace('www.', '', 1)
+        new_url = f"{request.scheme}://{new_host}{request.full_path}"
+        # Send them to the new URL with a permanent (301) status code
+        return redirect(new_url, code=301)
+
 # =============================
 # AUTH ROUTES
 # =============================
