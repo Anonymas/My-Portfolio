@@ -1908,3 +1908,142 @@ footer { background: #0f1320 !important; }
 .back-to-top.show {
   animation: fadeInUp 0.3s ease;
 }
+
+
+
+/* ============================================================
+   ADMIN PANEL — MOBILE UX 
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+  /* ---------- GLOBAL FIX ---------- */
+  body.sidebar-open {
+    overflow: hidden; /* prevent background scroll */
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .admin-layout {
+    display: flex;
+    flex-direction: row; /* DO NOT stack */
+  }
+
+  /* ---------- SIDEBAR (DRAWER) ---------- */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 240px;
+    height: 100vh;
+    z-index: 1200;
+    background: #111;
+    transition: left 0.3s ease;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.6);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* ---------- OVERLAY ---------- */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1100;
+    display: none;
+  }
+
+  .sidebar-overlay.show {
+    display: block;
+  }
+
+  /* ---------- MAIN CONTENT ---------- */
+  .admin-main {
+    width: 100%;
+    padding: 20px 14px;
+  }
+
+  /* ---------- HEADER ---------- */
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  /* ---------- HAMBURGER BUTTON ---------- */
+  .menu-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 6px;
+  }
+
+  .menu-toggle span {
+    width: 24px;
+    height: 2px;
+    background: var(--neon, #00f5ff);
+    display: block;
+    transition: 0.3s;
+  }
+
+  /* optional animation */
+  .sidebar.open ~ .admin-main .menu-toggle span:nth-child(1) {
+    transform: rotate(45deg) translateY(6px);
+  }
+
+  .sidebar.open ~ .admin-main .menu-toggle span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .sidebar.open ~ .admin-main .menu-toggle span:nth-child(3) {
+    transform: rotate(-45deg) translateY(-6px);
+  }
+
+  /* ---------- STATS ---------- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  /* ---------- TABLE FIX ---------- */
+  .projects-card {
+    overflow-x: auto;
+  }
+
+  .projects-table {
+    min-width: 700px;
+  }
+
+  /* ---------- HEADER ACTIONS ---------- */
+  .dashboard-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ---------- TEXT ---------- */
+  .dashboard-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .dashboard-header p {
+    font-size: 0.85rem;
+  }
+
+
+}

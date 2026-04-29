@@ -21,6 +21,16 @@
 
 <!-- MAIN -->
 <main class="admin-main">
+   <div class="admin-header">
+  <div class="menu-toggle" onclick="toggleSidebar()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  
+</div>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
   <h1>Contact Messages</h1>
 
   <!-- SEARCH -->
@@ -85,5 +95,12 @@
 
 </div>
 
+<script>
+  function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+  document.body.classList.toggle('sidebar-open'); 
+}
+</script>
 
 {% endblock %}
