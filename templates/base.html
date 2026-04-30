@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="canonical" href="https://dennisgithinji.tech{{ request.path }}">
+  <link rel="canonical" href="{{ url_for(request.endpoint, _external=True, **request.view_args or {}) }}">
 
   <meta name="description" content="Dennis Githinji is a cloud engineer and software developer in Kenya specializing in web applications, desktop applications, API & Mpesa integrations, and cloud deployment.">
 

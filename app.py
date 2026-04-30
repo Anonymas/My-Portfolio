@@ -131,14 +131,37 @@ class ProjectView(db.Model):
     
 
 @app.before_request
-def ensure_non_www():
-    # If the user visits 'www.dennisgithinji.tech'
-    if request.host.startswith('www.'):
-        # Build the new URL without 'www.'
-        new_host = request.host.replace('www.', '', 1)
-        new_url = f"{request.scheme}://{new_host}{request.full_path}"
-        # Send them to the new URL with a permanent (301) status code
-        return redirect(new_url, code=301)
+def redirect_to_canonical():
+    """
+    Force all traffic to https://dennisgithinji.tech (no www, no http)
+    This is CRITICAL for SEO and indexing
+    """
+    # Skip redirects for local development
+    if request.host.startswith('127.0.0.1') or request.host.startswith('localhost'):
+        return None
+    
+    canonical_domain = 'dennisgithinji.tech'  # Without www
+    canonical_scheme = 'https'
+    
+    needs_redirect = False
+    target_url = None
+    
+    # Case 1: HTTP → HTTPS
+    if request.scheme != canonical_scheme:
+        needs_redirect = True
+        target_url = f"{canonical_scheme}://{request.host}{request.full_path}"
+    
+    # Case 2: www → non-www
+    elif request.host.startswith('www.'):
+        needs_redirect = True
+        host_without_www = request.host.replace('www.', '', 1)
+        target_url = f"{canonical_scheme}://{host_without_www}{request.full_path}"
+    
+    # Execute the redirect if needed (301 = permanent)
+    if needs_redirect and target_url:
+        return redirect(target_url, code=301)
+    
+    return None
 
 # =============================
 # AUTH ROUTES
@@ -518,7 +541,73 @@ def inject_unread_messages():
 
 @app.route('/sitemap.xml')
 def sitemap():
-    return send_from_directory('.', 'sitemap.xml')
+    """Generate dynamic sitemap XML"""
+    # Get all your pages
+    projects = Project.query.all()
+    
+    # Base URLs to include
+    static_pages = [
+        '/',
+        '/about',
+        '/projects',
+        '/contact',
+    ]
+    
+    # Start building the XML
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    
+    # Add static pages
+    for page in static_pages:
+        sitemap_xml += '  <url>\n'
+        sitemap_xml += f'    <loc>https://dennisgithinji.tech{page}</loc>\n'
+        sitemap_xml += '    <lastmod>' + datetime.utcnow().date().isoformat() + '</lastmod>\n'
+        
+        # Homepage gets highest priority
+        priority = '1.0' if page == '/' else '0.8'
+        changefreq = 'weekly' if page == '/' else 'monthly'
+        
+        sitemap_xml += f'    <changefreq>{changefreq}</changefreq>\n'
+        sitemap_xml += f'    <priority>{priority}</priority>\n'
+        sitemap_xml += '  </url>\n'
+    
+    # Add project pages
+    for project in projects:
+        sitemap_xml += '  <url>\n'
+        sitemap_xml += f'    <loc>https://dennisgithinji.tech/project/{project.id}</loc>\n'
+        sitemap_xml += '    <lastmod>' + datetime.utcnow().date().isoformat() + '</lastmod>\n'
+        sitemap_xml += '    <changefreq>monthly</changefreq>\n'
+        sitemap_xml += '    <priority>0.7</priority>\n'
+        sitemap_xml += '  </url>\n'
+    
+    sitemap_xml += '</urlset>'
+    
+    return sitemap_xml, 200, {'Content-Type': 'application/xml'}
+
+
+# =============================
+# Robots.txt Route
+# =============================
+
+@app.route('/robots.txt')
+def robots_txt():
+    """Serve robots.txt for search engines"""
+    content = """User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /add
+Disallow: /edit_project/
+Disallow: /delete/
+Disallow: /delete_detail/
+Disallow: /add_project_detail
+Disallow: /edit_project_detail/
+Disallow: /admin/messages
+
+Sitemap: https://dennisgithinji.tech/sitemap.xml
+Host: https://dennisgithinji.tech
+"""
+    return content, 200, {'Content-Type': 'text/plain'}
 
 # =============================
 # Favicon Route
@@ -577,6 +666,29 @@ def create_admin(username, password):
 def session_timeout():
     if 'admin' in session:
         session.modified = True
+
+@app.before_request
+def add_trailing_slash():
+    """
+    Ensure URLs have consistent trailing slashes for SEO
+    Skip for files with extensions and admin routes
+    """
+    # Skip if already has trailing slash
+    if request.path.endswith('/'):
+        return None
+    
+    # Skip static files and admin routes
+    path = request.path
+    if ('.' in path.split('/')[-1] or  # Has file extension
+        path.startswith('/static') or
+        path.startswith('/admin') or
+        path.startswith('/add') or
+        path.startswith('/delete') or
+        path.startswith('/edit')):
+        return None
+    
+    # Redirect to version with trailing slash
+    return redirect(request.url + '/', code=301)
 
 # =============================
 #  RUN APP
