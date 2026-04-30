@@ -667,28 +667,6 @@ def session_timeout():
     if 'admin' in session:
         session.modified = True
 
-@app.before_request
-def add_trailing_slash():
-    """
-    Ensure URLs have consistent trailing slashes for SEO
-    Skip for files with extensions and admin routes
-    """
-    # Skip if already has trailing slash
-    if request.path.endswith('/'):
-        return None
-    
-    # Skip static files and admin routes
-    path = request.path
-    if ('.' in path.split('/')[-1] or  # Has file extension
-        path.startswith('/static') or
-        path.startswith('/admin') or
-        path.startswith('/add') or
-        path.startswith('/delete') or
-        path.startswith('/edit')):
-        return None
-    
-    # Redirect to version with trailing slash
-    return redirect(request.url + '/', code=301)
 
 # =============================
 #  RUN APP
