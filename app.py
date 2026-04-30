@@ -605,7 +605,6 @@ Disallow: /edit_project_detail/
 Disallow: /admin/messages
 
 Sitemap: https://dennisgithinji.tech/sitemap.xml
-Host: https://dennisgithinji.tech
 """
     return content, 200, {'Content-Type': 'text/plain'}
 
